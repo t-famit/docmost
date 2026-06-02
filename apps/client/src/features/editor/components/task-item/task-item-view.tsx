@@ -80,7 +80,9 @@ export default function TaskItemView(props: NodeViewProps) {
               <DateInput
                 ref={inputRef}
                 value={currentValue}
-                onChange={handleDateChange}
+                onChange={(date) => {
+                  updateAttributes({ dueDate: date ? dayjs(date).toISOString() : null });
+                }}
                 valueFormat="MM/DD/YYYY"
                 placeholder="MM/DD/YYYY"
                 clearable
@@ -89,6 +91,10 @@ export default function TaskItemView(props: NodeViewProps) {
                 highlightToday
                 weekendDays={[]}
                 onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setOpened(false);
+                    editor.commands.focus();
+                  }
                   if (e.key === "Escape") {
                     setOpened(false);
                     editor.commands.focus();
