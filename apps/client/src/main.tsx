@@ -14,6 +14,9 @@ import { Notifications } from "@mantine/notifications";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import "./i18n";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+  dayjs.extend(customParseFormat);
 import { PostHogProvider } from "posthog-js/react";
 import {
   getPostHogHost,

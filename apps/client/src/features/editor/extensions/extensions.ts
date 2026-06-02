@@ -3,6 +3,7 @@ import { StarterKit } from "@tiptap/starter-kit";
 import { Code } from "@tiptap/extension-code";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { TaskList, TaskItem } from "@tiptap/extension-list";
+import TaskItemView from "@/features/editor/components/task-item/task-item-view.tsx";
 import { Placeholder, CharacterCount } from "@tiptap/extensions";
 import { Superscript } from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
@@ -214,7 +215,22 @@ export const mainExtensions = [
   TaskList,
   TaskItem.configure({
     nested: true,
-  }),
+  }).extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      dueDate: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-due-date"),
+        renderHTML: (attrs) =>
+          attrs.dueDate ? { "data-due-date": attrs.dueDate } : {},
+      },
+    };
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(TaskItemView);
+  },
+}),
   LinkExtension.configure({
     openOnClick: false,
   }).extend({
