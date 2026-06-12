@@ -16,7 +16,8 @@ export default function TaskItemView(props: NodeViewProps) {
   const isOverdue = parsedDate && !checked && parsedDate.isBefore(dayjs(), "day");
   const isToday = parsedDate && parsedDate.isSame(dayjs(), "day");
 
-  const dateColor = isOverdue ? "red" : isToday ? "orange" : "dimmed";
+const isThisWeek = parsedDate && !isOverdue && !isToday && parsedDate.diff(dayjs(), "day") <= 7;
+const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yellow.7" : "blue.7";
 
   useEffect(() => {
     const handler = () => setOpened(true);
@@ -27,6 +28,9 @@ export default function TaskItemView(props: NodeViewProps) {
   useEffect(() => {
     if (opened) {
       setTimeout(() => inputRef.current?.focus(), 50);
+      if (!dueDate) {
+        updateAttributes({ dueDate: dayjs().startOf("day").toISOString() });
+      }
     }
   }, [opened]);
 
@@ -90,16 +94,6 @@ export default function TaskItemView(props: NodeViewProps) {
                 firstDayOfWeek={0}
                 highlightToday
                 weekendDays={[]}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setOpened(false);
-                    editor.commands.focus();
-                  }
-                  if (e.key === "Escape") {
-                    setOpened(false);
-                    editor.commands.focus();
-                  }
-                }}
               />
             </Popover.Dropdown>
           </Popover>
@@ -109,6 +103,7 @@ export default function TaskItemView(props: NodeViewProps) {
             size="xs"
             c={dateColor}
             contentEditable={false}
+            className="not-draggable"
             style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: "4px" }}
           >
             {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}

@@ -369,6 +369,7 @@ export function DragHandlePlugin(
             view,
           );
 
+
           const notDragging = node?.closest(".not-draggable");
           const excludedTagList = options.excludedTags
             .concat(["ol", "ul"])
@@ -416,7 +417,7 @@ export function DragHandlePlugin(
           rect.top += (lineHeight - 24) / 2;
           rect.top += paddingTop;
           // Li markers
-          if (node.matches("ul:not([data-type=taskList]) li, ol li")) {
+          if (node.matches("ul:not([data-type=taskList]) li, ol li, [data-type=taskList] li")) {
             rect.left -= options.dragHandleWidth;
           }
           // Tables: clear the table's own row-drag handle so the two
