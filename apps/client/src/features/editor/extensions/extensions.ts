@@ -59,6 +59,7 @@ import {
   Columns,
   Column,
   Status,
+  TaskItemDescription,
   TransclusionSource,
   TransclusionReference,
   TableView,
@@ -114,6 +115,7 @@ import { countWords } from "alfaaz";
 import AutoJoiner from "@/features/editor/extensions/autojoiner.ts";
 import GlobalDragHandle from "@/features/editor/extensions/drag-handle.ts";
 import { CleanStyles } from "@/features/editor/extensions/clean-styles.ts";
+import TaskItemDescriptionView from "@/features/editor/components/task-item/task-item-description-view.tsx";
 
 const lowlight = createLowlight(common);
 lowlight.register("mermaid", plaintext);
@@ -240,8 +242,7 @@ export const mainExtensions = [
           // If we're in a description paragraph (second child of taskItem), 
           // Exit to new task item
           const taskItem = $from.node(-1);
-          const isDescription = taskItem.childCount > 1 && 
-            $from.index(-1) === 1;
+          const isDescription = $from.parent.type.name === "taskItemDescription";
 
           if (isDescription) {
             return editor.chain()
@@ -268,15 +269,14 @@ export const mainExtensions = [
           if ($from.parent.type.name !== "paragraph") return false;
           if ($from.node(-1)?.type.name !== "taskItem") return false;
 
-          // Only create description from first paragraph, not if already in description
           const taskItem = $from.node(-1);
           if (taskItem.childCount > 1) return false;
 
+          const descNode = schema.nodes.taskItemDescription?.create({});
+          if (!descNode) return false;
+
           const insertPos = $from.after(-1) - 1;
-          const descParagraph = schema.nodes.paragraph.create(
-            { id: null, indent: 0 }
-          );
-          const tr = state.tr.insert(insertPos, descParagraph);
+          const tr = state.tr.insert(insertPos, descNode);
           tr.setSelection(
             // @ts-ignore
             state.selection.constructor.near(tr.doc.resolve(insertPos + 1))
@@ -284,7 +284,6 @@ export const mainExtensions = [
           dispatch(tr);
           return true;
         },
-
         Backspace: ({ editor }) => {
           const { state, dispatch } = editor.view;
           const { selection, schema } = state;
@@ -294,8 +293,7 @@ export const mainExtensions = [
           if ($from.node(-1)?.type.name !== "taskItem") return false;
 
           const taskItem = $from.node(-1);
-          const isDescription = taskItem.childCount > 1 && 
-            $from.index(-1) === 1;
+          const isDescription = $from.parent.type.name === "taskItemDescription";
 
           if (!isDescription) return false;
 
@@ -313,6 +311,11 @@ export const mainExtensions = [
     },
     addNodeView() {
       return ReactNodeViewRenderer(TaskItemView);
+    },
+  }),
+  TaskItemDescription.extend({
+    addNodeView() {
+      return ReactNodeViewRenderer(TaskItemDescriptionView);
     },
   }),
   LinkExtension.configure({

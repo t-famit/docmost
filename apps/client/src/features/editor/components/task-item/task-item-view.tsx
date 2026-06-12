@@ -15,9 +15,11 @@ export default function TaskItemView(props: NodeViewProps) {
   const parsedDate = dueDate ? dayjs(dueDate) : null;
   const isOverdue = parsedDate && !checked && parsedDate.isBefore(dayjs(), "day");
   const isToday = parsedDate && parsedDate.isSame(dayjs(), "day");
+  const isThisWeek = parsedDate && !isOverdue && !isToday && parsedDate.diff(dayjs(), "day") <= 7;
+  const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yellow.7" : "blue.7";
 
-const isThisWeek = parsedDate && !isOverdue && !isToday && parsedDate.diff(dayjs(), "day") <= 7;
-const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yellow.7" : "blue.7";
+  const hasDescription = node.childCount > 1 &&
+    node.child(1).type.name === "taskItemDescription";
 
   useEffect(() => {
     const handler = () => setOpened(true);
@@ -34,12 +36,6 @@ const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yel
     }
   }, [opened]);
 
-  const handleDateChange = (date: Date | null) => {
-    updateAttributes({ dueDate: date ? dayjs(date).toISOString() : null });
-    setOpened(false);
-    editor.commands.focus();
-  };
-
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateAttributes({ checked: e.target.checked });
   };
@@ -47,97 +43,141 @@ const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yel
   const currentValue = dueDate ? new Date(dueDate) : null;
 
   const descriptionStyle = `
-    [data-type="taskItem"] .task-content p:nth-child(2) {
+    [data-type="taskItemDescription"] {
       font-size: 12px;
-      margin: 2px 0 0 0;
       opacity: 0.75;
-      color: var(--mantine-color-gray-5);
+      margin: 2px 0 0 0;
     }
-    [data-mantine-color-scheme="dark"] [data-type="taskItem"] .task-content p:nth-child(2) {
+    [data-mantine-color-scheme="dark"] [data-type="taskItemDescription"] {
       color: var(--mantine-color-gray-3);
     }
-    [data-mantine-color-scheme="light"] [data-type="taskItem"] .task-content p:nth-child(2) {
+    [data-mantine-color-scheme="light"] [data-type="taskItemDescription"] {
       color: var(--mantine-color-gray-9);
     }
   `;
 
   return (
     <NodeViewWrapper as="li" data-checked={checked} data-type="taskItem">
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={handleCheckboxChange}
-          disabled={!isEditable}
-          contentEditable={false}
-          style={{ marginTop: "3px", flexShrink: 0, cursor: "pointer" }}
-        />
-        {isEditable && (
-          <Popover
-            opened={opened}
-            onChange={setOpened}
-            position="bottom-start"
-            withArrow
-            shadow="md"
-          >
-            <Popover.Target>
-              <ActionIcon
-                variant="subtle"
-                color={dueDate ? dateColor : "gray"}
-                size="sm"
-                onClick={() => setOpened((o) => !o)}
-                contentEditable={false}
-                title={dueDate ? `Due: ${parsedDate?.format("MMM D, YYYY")}` : "Set due date"}
-              >
-                {isOverdue
-                  ? <IconCalendarExclamation size={14} />
-                  : <IconCalendar size={14} />
-                }
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <DateInput
-                ref={inputRef}
-                value={currentValue}
-                onChange={(date) => {
-                  updateAttributes({ dueDate: date ? dayjs(date).toISOString() : null });
-                }}
-                valueFormat="MM/DD/YYYY"
-                placeholder="MM/DD/YYYY"
-                clearable
-                size="sm"
-                firstDayOfWeek={0}
-                highlightToday
-                weekendDays={[]}
-              />
-            </Popover.Dropdown>
-          </Popover>
-        )}
-          {dueDate && (
-            <Badge
-              color={dateColor}
-              variant="filled"
-              size="xs"
-              contentEditable={false}
-              className="not-draggable"
-              style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: "4px", cursor: "default" }}
-            >
-              {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}
-            </Badge>
-          )}
-       <>
-        <style>{descriptionStyle}</style>
-        <div className="task-content" style={{ flex: 1 }}>
+      <style>{descriptionStyle}</style>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+        <div style={{ flexShrink: 0 }}>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={handleCheckboxChange}
+            disabled={!isEditable}
+            contentEditable={false}
+            style={{ marginTop: "3px", cursor: "pointer" }}
+          />
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+          {/* Task text */}
           <NodeViewContent
-            as="span"
+            as="div"
             style={{
               textDecoration: checked ? "line-through" : "none",
               opacity: checked ? 0.6 : 1,
               outline: "none",
             }}
           />
+          {/* Date row — after text, before description */}
+          {dueDate && isEditable && (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }} contentEditable={false}>
+              <Popover
+                opened={opened}
+                onChange={setOpened}
+                position="bottom-start"
+                withArrow
+                shadow="md"
+              >
+                <Popover.Target>
+                  <ActionIcon
+                    variant="subtle"
+                    color={dateColor}
+                    size="xs"
+                    onClick={() => setOpened((o) => !o)}
+                    className="not-draggable"
+                    title={`Due: ${parsedDate?.format("MMM D, YYYY")}`}
+                  >
+                    {isOverdue
+                      ? <IconCalendarExclamation size={12} />
+                      : <IconCalendar size={12} />
+                    }
+                  </ActionIcon>
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <DateInput
+                    ref={inputRef}
+                    value={currentValue}
+                    onChange={(date) => {
+                      updateAttributes({ dueDate: date ? dayjs(date).toISOString() : null });
+                    }}
+                    valueFormat="MM/DD/YYYY"
+                    placeholder="MM/DD/YYYY"
+                    clearable
+                    size="sm"
+                    firstDayOfWeek={0}
+                    highlightToday
+                    weekendDays={[]}
+                  />
+                </Popover.Dropdown>
+              </Popover>
+              <Badge
+                color={dateColor}
+                variant="filled"
+                size="xs"
+                className="not-draggable"
+                style={{ cursor: "default", fontSize: "9px" }}
+              >
+                {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}
+              </Badge>
+            </div>
+          )}
+          {/* Ghost calendar — no date assigned */}
+          {!dueDate && isEditable && false && (
+            <div style={{ display: "flex", alignItems: "center" }} contentEditable={false}>
+              <Popover
+                opened={opened}
+                onChange={setOpened}
+                position="bottom-start"
+                withArrow
+                shadow="md"
+              >
+                <Popover.Target>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="xs"
+                    onClick={() => setOpened((o) => !o)}
+                    className="not-draggable"
+                    title="Set due date"
+                    style={{ opacity: 0, transition: "opacity 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
+                  >
+                    <IconCalendar size={12} />
+                  </ActionIcon>
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <DateInput
+                    ref={inputRef}
+                    value={currentValue}
+                    onChange={(date) => {
+                      updateAttributes({ dueDate: date ? dayjs(date).toISOString() : null });
+                    }}
+                    valueFormat="MM/DD/YYYY"
+                    placeholder="MM/DD/YYYY"
+                    clearable
+                    size="sm"
+                    firstDayOfWeek={0}
+                    highlightToday
+                    weekendDays={[]}
+                  />
+                </Popover.Dropdown>
+              </Popover>
+            </div>
+          )}
         </div>
-      </>
       </div>
     </NodeViewWrapper>
   );
