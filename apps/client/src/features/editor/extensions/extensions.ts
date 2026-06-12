@@ -216,21 +216,105 @@ export const mainExtensions = [
   TaskItem.configure({
     nested: true,
   }).extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      dueDate: {
-        default: null,
-        parseHTML: (el) => el.getAttribute("data-due-date"),
-        renderHTML: (attrs) =>
-          attrs.dueDate ? { "data-due-date": attrs.dueDate } : {},
-      },
-    };
-  },
-  addNodeView() {
-    return ReactNodeViewRenderer(TaskItemView);
-  },
-}),
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        dueDate: {
+          default: null,
+          parseHTML: (el) => el.getAttribute("data-due-date"),
+          renderHTML: (attrs) =>
+            attrs.dueDate ? { "data-due-date": attrs.dueDate } : {},
+        },
+      };
+    },
+    addKeyboardShortcuts() {
+      return {
+        Enter: ({ editor }) => {
+          const { state, dispatch } = editor.view;
+          const { selection, schema } = state;
+          const { $from } = selection;
+
+          if ($from.parent.type.name !== "paragraph") return false;
+          if ($from.node(-1)?.type.name !== "taskItem") return false;
+
+          // If we're in a description paragraph (second child of taskItem), 
+          // Exit to new task item
+          const taskItem = $from.node(-1);
+          const isDescription = taskItem.childCount > 1 && 
+            $from.index(-1) === 1;
+
+          if (isDescription) {
+            return editor.chain()
+              .focus()
+              .splitListItem("taskItem")
+              .updateAttributes("taskItem", { checked: false, dueDate: null })
+              .run();
+          }
+
+          // Default: create new task item without inheriting dueDate
+          const tr = state.tr.split($from.pos, 2, [
+            { type: schema.nodes.taskItem, attrs: { checked: false, dueDate: null } },
+            { type: schema.nodes.paragraph, attrs: { id: null, indent: 0 } },
+          ]);
+          dispatch(tr);
+          return true;
+        },
+
+        "Shift-Enter": ({ editor }) => {
+          const { state, dispatch } = editor.view;
+          const { selection, schema } = state;
+          const { $from } = selection;
+
+          if ($from.parent.type.name !== "paragraph") return false;
+          if ($from.node(-1)?.type.name !== "taskItem") return false;
+
+          // Only create description from first paragraph, not if already in description
+          const taskItem = $from.node(-1);
+          if (taskItem.childCount > 1) return false;
+
+          const insertPos = $from.after(-1) - 1;
+          const descParagraph = schema.nodes.paragraph.create(
+            { id: null, indent: 0 }
+          );
+          const tr = state.tr.insert(insertPos, descParagraph);
+          tr.setSelection(
+            // @ts-ignore
+            state.selection.constructor.near(tr.doc.resolve(insertPos + 1))
+          );
+          dispatch(tr);
+          return true;
+        },
+
+        Backspace: ({ editor }) => {
+          const { state, dispatch } = editor.view;
+          const { selection, schema } = state;
+          const { $from } = selection;
+
+          if ($from.parent.type.name !== "paragraph") return false;
+          if ($from.node(-1)?.type.name !== "taskItem") return false;
+
+          const taskItem = $from.node(-1);
+          const isDescription = taskItem.childCount > 1 && 
+            $from.index(-1) === 1;
+
+          if (!isDescription) return false;
+
+          // If description is empty, delete it
+          if ($from.parent.textContent === "") {
+            const from = $from.before();
+            const to = $from.after();
+            dispatch(state.tr.delete(from, to));
+            return true;
+          }
+
+          return false;
+        },
+      };
+    },
+    addNodeView() {
+      return ReactNodeViewRenderer(TaskItemView);
+    },
+  }),
   LinkExtension.configure({
     openOnClick: false,
   }).extend({

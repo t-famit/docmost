@@ -46,6 +46,21 @@ const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yel
 
   const currentValue = dueDate ? new Date(dueDate) : null;
 
+  const descriptionStyle = `
+    [data-type="taskItem"] .task-content p:nth-child(2) {
+      font-size: 12px;
+      margin: 2px 0 0 0;
+      opacity: 0.75;
+      color: var(--mantine-color-gray-5);
+    }
+    [data-mantine-color-scheme="dark"] [data-type="taskItem"] .task-content p:nth-child(2) {
+      color: var(--mantine-color-gray-3);
+    }
+    [data-mantine-color-scheme="light"] [data-type="taskItem"] .task-content p:nth-child(2) {
+      color: var(--mantine-color-gray-9);
+    }
+  `;
+
   return (
     <NodeViewWrapper as="li" data-checked={checked} data-type="taskItem">
       <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
@@ -110,15 +125,19 @@ const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yel
               {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}
             </Badge>
           )}
-        <NodeViewContent
-          as="span"
-          style={{
-            textDecoration: checked ? "line-through" : "none",
-            opacity: checked ? 0.6 : 1,
-            flex: 1,
-            outline: "none",
-          }}
-        />
+       <>
+        <style>{descriptionStyle}</style>
+        <div className="task-content" style={{ flex: 1 }}>
+          <NodeViewContent
+            as="span"
+            style={{
+              textDecoration: checked ? "line-through" : "none",
+              opacity: checked ? 0.6 : 1,
+              outline: "none",
+            }}
+          />
+        </div>
+      </>
       </div>
     </NodeViewWrapper>
   );
