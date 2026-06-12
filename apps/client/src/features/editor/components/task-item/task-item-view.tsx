@@ -1,5 +1,5 @@
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import { ActionIcon, Popover, Text } from "@mantine/core";
+import { ActionIcon, Badge, Popover } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { IconCalendar, IconCalendarExclamation } from "@tabler/icons-react";
 import { useState, useEffect, useRef } from "react";
@@ -98,17 +98,18 @@ const dateColor = isOverdue ? "red.6" : isToday ? "orange.7" : isThisWeek ? "yel
             </Popover.Dropdown>
           </Popover>
         )}
-        {dueDate && (
-          <Text
-            size="xs"
-            c={dateColor}
-            contentEditable={false}
-            className="not-draggable"
-            style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: "4px" }}
-          >
-            {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}
-          </Text>
-        )}
+          {dueDate && (
+            <Badge
+              color={dateColor}
+              variant="filled"
+              size="xs"
+              contentEditable={false}
+              className="not-draggable"
+              style={{ flexShrink: 0, alignSelf: "flex-start", marginTop: "4px", cursor: "default" }}
+            >
+              {isToday ? "Today" : isOverdue ? `Overdue · ${parsedDate?.format("MMM D")}` : parsedDate?.format("MMM D")}
+            </Badge>
+          )}
         <NodeViewContent
           as="span"
           style={{
