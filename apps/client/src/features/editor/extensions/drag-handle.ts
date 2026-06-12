@@ -417,9 +417,13 @@ export function DragHandlePlugin(
           rect.top += (lineHeight - 24) / 2;
           rect.top += paddingTop;
           // Li markers
-          if (node.matches("ul:not([data-type=taskList]) li, ol li, [data-type=taskList] li")) {
+          if (node.matches("ul:not([data-type=taskList]) li, ol li")) {
             rect.left -= options.dragHandleWidth;
-          }
+          }            
+          // Task list items: adjust vertical position
+          if (node.matches("[data-type=taskList] li")) {
+            rect.top -= 4;      
+          }     
           // Tables: clear the table's own row-drag handle so the two
           // grips don't stack on each other. `nodeDOMAtCoords` returns
           // the wrapper for top-level hovers (wrapper is direct child of
